@@ -1,8 +1,10 @@
+#define GLFW_INCLUDE_NONE
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <unistd.h>
 
 #define ROWS 40
 #define COLS 40
@@ -10,6 +12,8 @@
 #define BORDER_THICKNESS 2
 #define UI_HEIGHT 2
 //#define WINDOW_HEIGHT_OFFSET (UI_HEIGHT * CELL_SIZE)
+
+
 
 int snakeX[(ROWS * COLS) + 1]; // +1 for the initial two-block snake
 int snakeY[(ROWS * COLS) + 1];
@@ -19,6 +23,20 @@ int lastDirection = GLUT_KEY_RIGHT; // Variable to keep track of last direction
 
 int foodX, foodY;
 int score = 0;
+int randX, randY;
+
+void generateFood(){
+    srand(time(NULL));
+    randX = rand() % (40+1-0) + 0 ;
+    foodX = randX * CELL_SIZE;
+    printf("foodX: %d\n", foodX);
+    randY = rand() % (37 + 1 - 4)+4;
+    foodY = randY * CELL_SIZE;
+    printf("foodY: %d\n", foodY);
+
+
+
+}
 
 void init() {
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -26,15 +44,28 @@ void init() {
     glLoadIdentity();
     gluOrtho2D(0, COLS * CELL_SIZE, UI_HEIGHT * CELL_SIZE, (ROWS + 2 )*CELL_SIZE);
     srand(time(NULL));
-    foodX = (rand() % COLS) * CELL_SIZE;
-    foodY = (rand() % ROWS) * CELL_SIZE;
+    randX = rand() % (40+1-0) + 0 ;
+    foodX = randX * CELL_SIZE;
+//    printf("foodX: %d\n", foodX);
 
+    randY = rand() % (37 + 1 - 4)+4;
+    foodY = randY * CELL_SIZE;
+ //   printf("foodY: %d\n", foodY);
+   // foodY = (rand() % (ROWS - 2)*CELL_SIZE) + CELL_SIZE;
+/*
+    foodX = (rand() % COLS) * CELL_SIZE;
+
+*/
     // Initialize snake with two blocks
     snakeX[0] = COLS * CELL_SIZE / 2; // Centered horizontally
     snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2; // Centered vertically
     snakeX[1] = snakeX[0] - CELL_SIZE; // One block to the left
     snakeY[1] = snakeY[0]; // Same row as the head
 }
+
+
+
+
 
 void drawCell(int x, int y) {
     glBegin(GL_QUADS);
@@ -109,6 +140,13 @@ void UI(){
 
 }
 
+
+
+
+
+
+
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     drawSnake();
@@ -153,21 +191,36 @@ void update(int value) {
     // Check if snake eats food
     if (snakeX[0] == foodX && snakeY[0] == foodY) {
         snakeLength++;
-        foodX = (rand() % COLS) * CELL_SIZE;
-        foodY = (rand() % ROWS) * CELL_SIZE;
+        generateFood();
         score++;
     }
 
     // Check for collisions with tail
     for (int i = 1; i < snakeLength; ++i) {
+   //     printf("value_snakeY: ");
+        printf("foodX: %d\n", foodX);
+        printf("foodY: %d\n", foodY);
+      //  printf( "%d\n", snakeY[0]);
+      //  printf("snakeX: ");
+//printf("%d\n", snakeX[0]);
+
         if (snakeX[i] == snakeX[0] && snakeY[i] == snakeY[0]) {
             exit(0); // End the game when the snake collides with itself
         }
     }
 
+
     // Check for collision with border
-    if(snakeX[0] < 0 || snakeX[0] >= COLS * CELL_SIZE || snakeY[0] >= (ROWS-2) * CELL_SIZE || snakeY[0] < 0){
+    if(snakeX[0] < 0 || snakeX[0] >= COLS * CELL_SIZE || snakeY[0] >= (ROWS-2) * CELL_SIZE || snakeY[0] < (4*CELL_SIZE)){
+
+
+      //  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);   // Generate a blank background, use swapbuffers to clear the second background - game
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        glutSwapBuffers();
+        sleep(5);
         exit(0);
+
     }
 }
 
@@ -192,6 +245,22 @@ void keyboard(int key, int x, int y) {
     }
 }
 
+
+void reshape(int w, int h){
+    if(w / (float)COLS < h / (float)ROWS){
+
+        h = w / COLS * ROWS;
+    }else {
+        w = h / ROWS * COLS;
+    }
+    glViewport(0, 0, w, h);
+
+
+
+
+
+}
+
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -200,7 +269,10 @@ int main(int argc, char** argv) {
     init();
     glutDisplayFunc(display);
     glutSpecialFunc(keyboard);
+    glutReshapeFunc(reshape);
     glutTimerFunc(0, update, 0);
     glutMainLoop();
     return 0;
+
 }
+
