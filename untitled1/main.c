@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
+
 #define ROWS 40 ///< Liczba wierszy planszy gry.
 #define COLS 40 ///< Liczba kolumn planszy gry.
 #define CELL_SIZE 21 ///< Rozmiar komórki w pikselach.
@@ -21,44 +22,47 @@
  * \enum GameState
  * \brief Stan gry
  */
-enum GameState { PLAYING, GAME_OVER };
 
+enum GameState{PLAYING, GAME_OVER};
 /*!
  * \var gameState
  * \brief Aktualny stan gry
  */
 enum GameState gameState = PLAYING;
-
 /*!
  * \var snakeX
  * \brief Tablica przechowująca współrzędne X węża
  */
-int snakeX[(ROWS * COLS) + 1];
+int snakeX[(ROWS * COLS) + 1]; // +1 for the initial two-block snake
+
+
 
 /*!
  * \var snakeY
  * \brief Tablica przechowująca współrzędne Y węża
  */
+
 int snakeY[(ROWS * COLS) + 1];
 
-/*!
- * \var snakeLength
- * \brief Długość węża
- */
-int snakeLength = 2;
 
+/*!
+* \var snakeLength
+* \brief Długość węża
+*/
+int snakeLength = 2; // Start with two blocks
 /*!
  * \var direction
  * \brief Kierunek ruchu węża
  */
+
 int direction = GLUT_KEY_RIGHT;
 
 /*!
  * \var lastDirection
  * \brief Ostatni kierunek ruchu węża
  */
-int lastDirection = GLUT_KEY_RIGHT;
 
+int lastDirection = GLUT_KEY_RIGHT; // Variable to keep track of last direction
 /*!
  * \var foodX
  * \brief Współrzędna X jedzenia
@@ -69,11 +73,13 @@ int foodX;
  * \var foodY
  * \brief Współrzędna Y jedzenia
  */
+
 int foodY;
+
 
 /*!
  * \var score
- * \brief Wynik gracza
+ * \brief Ustawienie wyniku gracza na 0
  */
 int score = 0;
 
@@ -81,6 +87,7 @@ int score = 0;
  * \var randX
  * \brief Losowa współrzędna X do generowania jedzenia
  */
+
 int randX;
 
 /*!
@@ -88,46 +95,55 @@ int randX;
  * \brief Losowa współrzędna Y do generowania jedzenia
  */
 int randY;
-
 /*!
  * \brief Generuje jedzenie na losowej pozycji.
  */
-void generateFood() {
+void generateFood(){
     srand(time(NULL));
-    randX = rand() % 40;
+    randX = rand() % (39+1-0) + 0 ;
     foodX = randX * CELL_SIZE;
-    printf("foodX: %d\n", foodX);
-    randY = rand() % 34 + 4;
+    randY = rand() % (37 + 1 - 4)+4;
     foodY = randY * CELL_SIZE;
-    printf("foodY: %d\n", foodY);
+
+
+
 }
+
+
 
 /*!
  * \brief Inicjalizuje stan gry i ustawienia OpenGL.
  */
+
 void init() {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, COLS * CELL_SIZE, UI_HEIGHT * CELL_SIZE, (ROWS + 2) * CELL_SIZE);
+    gluOrtho2D(0, COLS * CELL_SIZE, UI_HEIGHT * CELL_SIZE, (ROWS + 2 )*CELL_SIZE);
     srand(time(NULL));
-    randX = rand() % 41;
+    randX = rand() % (40+1-0) + 0 ;
     foodX = randX * CELL_SIZE;
-    randY = rand() % 34 + 4;
+
+
+    randY = rand() % (37 + 1 - 4)+4;
     foodY = randY * CELL_SIZE;
 
-    // Inicjalizacja węża z dwoma blokami
-    snakeX[0] = COLS * CELL_SIZE / 2;
-    snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2;
-    snakeX[1] = snakeX[0] - CELL_SIZE;
-    snakeY[1] = snakeY[0];
+
+    // Initialize snake with two blocks
+    snakeX[0] = COLS * CELL_SIZE / 2; // Centered horizontally
+    snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2; // Centered vertically
+    snakeX[1] = snakeX[0] - CELL_SIZE; // One block to the left
+    snakeY[1] = snakeY[0]; // Same row as the head
 }
+
+
 
 /*!
  * \brief Rysuje komórkę na określonych współrzędnych.
  * \param[in] x Współrzędna x komórki.
  * \param[in] y Współrzędna y komórki.
  */
+
 void drawCell(int x, int y) {
     glBegin(GL_QUADS);
     glVertex2i(x, y);
@@ -140,6 +156,7 @@ void drawCell(int x, int y) {
 /*!
  * \brief Rysuje węża na ekranie.
  */
+
 void drawSnake() {
     glColor3f(0.0, 1.0, 0.0);
     for (int i = 0; i < snakeLength; ++i) {
@@ -150,6 +167,7 @@ void drawSnake() {
 /*!
  * \brief Rysuje jedzenie na ekranie.
  */
+
 void drawFood() {
     glColor3f(1.0, 0.0, 0.0);
     drawCell(foodX, foodY);
@@ -158,11 +176,12 @@ void drawFood() {
 /*!
  * \brief Rysuje granice obszaru gry.
  */
+
 void drawBorders() {
-    glColor3f(1.0, 1.0, 1.0);
+    glColor3f(1.0, 1.0, 1.0); // Border color
     glLineWidth(BORDER_THICKNESS);
 
-    // Rysowanie górnej granicy
+    // Draw top border
     glBegin(GL_LINE_LOOP);
     glVertex2i(0, (ROWS - UI_HEIGHT) * CELL_SIZE);
     glVertex2i(0, (ROWS - UI_HEIGHT) * CELL_SIZE - BORDER_THICKNESS);
@@ -170,15 +189,15 @@ void drawBorders() {
     glVertex2i(COLS * CELL_SIZE, (ROWS - UI_HEIGHT) * CELL_SIZE);
     glEnd();
 
-    // Rysowanie dolnej granicy
+    // Draw bottom border
     glBegin(GL_LINE_LOOP);
-    glVertex2i(0, (ROWS + 1) * BORDER_THICKNESS);
-    glVertex2i(0, 0);
+    glVertex2i(0, (ROWS+1)*BORDER_THICKNESS);
+    glVertex2i(0,0);
     glVertex2i(COLS * CELL_SIZE, 0);
-    glVertex2i(COLS * CELL_SIZE, (ROWS + 1) * BORDER_THICKNESS);
+    glVertex2i(COLS * CELL_SIZE, (ROWS+1)*BORDER_THICKNESS);
     glEnd();
 
-    // Rysowanie lewej granicy
+    // Draw left border
     glBegin(GL_LINE_LOOP);
     glVertex2i(0, 0);
     glVertex2i(BORDER_THICKNESS, 0);
@@ -186,7 +205,7 @@ void drawBorders() {
     glVertex2i(0, (ROWS + UI_HEIGHT) * CELL_SIZE);
     glEnd();
 
-    // Rysowanie prawej granicy
+    // Draw right border
     glBegin(GL_LINE_LOOP);
     glVertex2i(COLS * CELL_SIZE - BORDER_THICKNESS, 0);
     glVertex2i(COLS * CELL_SIZE, 0);
@@ -198,54 +217,64 @@ void drawBorders() {
 /*!
  * \brief Wyświetla wynik na ekranie.
  */
-void UI() {
-    glColor3f(1.0, 1.0, 1.0);
-    glRasterPos2i(10, (ROWS + UI_HEIGHT) * CELL_SIZE - 20);
+
+void UI(){
+    glColor3f(1.0, 1.0,1.0);
+    glRasterPos2i(10,(ROWS + UI_HEIGHT) * CELL_SIZE - 20);
     char scoreText[100];
-    sprintf(scoreText, "Wynik: %d", score);
+    sprintf(scoreText,"Score: %d", score);
     int len = strlen(scoreText);
-    for (int i = 0; i < len; i++) {
+    for(int i = 0; i < len;i++){
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, scoreText[i]);
+
     }
+
+
 }
 
 /*!
  * \brief Rysuje ekran końca gry z końcowym wynikiem i instrukcjami restartu.
  */
-void drawEndgameScreen() {
-    glColor3f(1.0, 1.0, 1.0);
+
+void drawEndgameScreen(){
+    glColor3f(1.0,1.0,1.0);
     char endgameText[100];
-    glRasterPos2i(COLS * CELL_SIZE / 2 - 80, (ROWS + UI_HEIGHT) * CELL_SIZE / 2 + 20);
-    sprintf(endgameText, "Koniec gry! Wynik: %d", score);
+    glRasterPos2i(COLS * CELL_SIZE / 2 - 80, (ROWS + UI_HEIGHT) * CELL_SIZE / 2 +20);
+    sprintf(endgameText, "Game Over! Score: %d", score);
     int len = strlen(endgameText);
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++){
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, endgameText[i]);
     }
 
-    char restartText[] = "Naciśnij F1 aby zrestartować";
+    char restartText[] = "Press F1 to Restart";
     glRasterPos2i(COLS * CELL_SIZE / 2 - 80, (ROWS + UI_HEIGHT) * CELL_SIZE / 2 - 20);
     len = strlen(restartText);
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++){
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, restartText[i]);
     }
+
 }
+
+
+
+
 
 /*!
  * \brief Główna funkcja wyświetlania. Rysuje elementy gry w zależności od aktualnego stanu gry.
  */
+
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     if (gameState == PLAYING) {
         drawSnake();
         drawFood();
         UI();
-        drawBorders();
-    } else if (gameState == GAME_OVER) {
+        drawBorders(); // Draw borders
+    }else if (gameState == GAME_OVER){
         drawEndgameScreen();
     }
     glutSwapBuffers();
 }
-
 /*!
  * \brief Aktualizuje stan gry i ruch węża.
  *
@@ -254,11 +283,14 @@ void display() {
  * \param[in] value Wartość przekazywana do funkcji timer'a GLUT (nieużywana).
  */
 void update(int value) {
-    if (gameState == PLAYING) {
+
+    if (gameState == PLAYING){
+
+
         glutPostRedisplay();
         glutTimerFunc(100, update, 0);
 
-        // Ruch węża
+        // Move the snake
         for (int i = snakeLength - 1; i > 0; --i) {
             snakeX[i] = snakeX[i - 1];
             snakeY[i] = snakeY[i - 1];
@@ -283,27 +315,33 @@ void update(int value) {
                 break;
         }
 
-        // Aktualizacja ostatniego kierunku
+        // Update last direction
         lastDirection = direction;
 
-        // Sprawdzenie, czy wąż zjada jedzenie
+        // Check if snake eats food
         if (snakeX[0] == foodX && snakeY[0] == foodY) {
             snakeLength++;
             generateFood();
             score++;
         }
 
-        // Sprawdzenie kolizji z ogonem
+        // Check for collisions with tail
         for (int i = 1; i < snakeLength; ++i) {
+
             if (snakeX[i] == snakeX[0] && snakeY[i] == snakeY[0]) {
                 gameState = GAME_OVER;
                 break;
             }
+
         }
 
-        // Sprawdzenie kolizji z granicami obszaru gry
-        if (snakeX[0] < 0 || snakeX[0] >= COLS * CELL_SIZE || snakeY[0] >= (ROWS - 2) * CELL_SIZE || snakeY[0] < (4 * CELL_SIZE)) {
+
+
+        // Check for collision with border
+        if(snakeX[0] < 0 || snakeX[0] >= COLS * CELL_SIZE || snakeY[0] >= (ROWS-2) * CELL_SIZE || snakeY[0] < (4*CELL_SIZE)){
             gameState = GAME_OVER;
+
+
         }
     }
 }
@@ -311,36 +349,49 @@ void update(int value) {
 /*!
  * \brief Restartuje grę, przywracając początkowe ustawienia.
  */
-void restartGame() {
+
+void restartGame(){
     score = 0;
     snakeLength = 2;
     direction = GLUT_KEY_RIGHT;
     lastDirection = GLUT_KEY_RIGHT;
 
-    snakeX[0] = COLS * CELL_SIZE / 2;
-    snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2;
-    snakeX[1] = snakeX[0] - CELL_SIZE;
-    snakeY[1] = snakeY[0];
+    snakeX[0] = COLS * CELL_SIZE / 2; // Centered horizontally
+    snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2; // Centered vertically
+    snakeX[1] = snakeX[0] - CELL_SIZE; // One block to the left
+    snakeY[1] = snakeY[0]; // Same row as the head
 
     generateFood();
     gameState = PLAYING;
 
     glutTimerFunc(0, update, 0);
 }
-
 /*!
  * \brief Obsługuje zdarzenie naciśnięcia klawisza F1 w stanie zakończonej gry, restartując grę.
  * \param[in] key Kod klawisza naciśniętego przez użytkownika.
  * \param[in] x Pozycja węża na osi x.
  * \param[in] y Pozycja węża na osi y.
  */
-void keyboardNormal(unsigned char key, int x, int y) {
-    if (gameState == GAME_OVER && key == GLUT_KEY_F1) {
-        restartGame();
-        init();
+void keyboardNormal(unsigned char key, int x, int y){
+    if (gameState == GAME_OVER && key == GLUT_KEY_F1){
+        score = 0;
+        snakeLength = 2;
+        direction = GLUT_KEY_RIGHT; // Reset direction to initial value
+        lastDirection = GLUT_KEY_RIGHT;
+
+        // Reinitialize snake position
+        snakeX[0] = COLS * CELL_SIZE / 2; // Centered horizontally
+        snakeY[0] = (ROWS + UI_HEIGHT) * CELL_SIZE / 2; // Centered vertically
+        snakeX[1] = snakeX[0] - CELL_SIZE; // One block to the left
+        snakeY[1] = snakeY[0]; // Same row as the head
+
+        generateFood();
+
+        gameState = PLAYING;
+
+        glutPostRedisplay();
     }
 }
-
 /*!
  * \brief Obsługuje zdarzenia naciśnięcia klawiszy strzałek lub klawisza F1.
  *
@@ -353,6 +404,7 @@ void keyboardNormal(unsigned char key, int x, int y) {
  */
 void keyboard(int key, int x, int y) {
     if (gameState == PLAYING) {
+
         switch (key) {
             case GLUT_KEY_UP:
                 if (lastDirection != GLUT_KEY_DOWN && snakeLength > 1)
@@ -371,7 +423,7 @@ void keyboard(int key, int x, int y) {
                     direction = key;
                 break;
         }
-    } else if (gameState == GAME_OVER && key == GLUT_KEY_F1) {
+    }else if(gameState == GAME_OVER && key == GLUT_KEY_F1){
         restartGame();
         init();
     }
@@ -382,16 +434,20 @@ void keyboard(int key, int x, int y) {
  * \param[in] w Nowa szerokość okna.
  * \param[in] h Nowa wysokość okna.
  */
-void reshape(int w, int h) {
-    if (w / (float)COLS < h / (float)ROWS * CELL_SIZE) {
-        h = w / COLS;
-    } else {
-        w = h / ROWS;
+
+void reshape(int w, int h){
+    if(w / (float)COLS < h / (float)ROWS){
+
+        h = w / COLS * ROWS;
+    }else {
+        w = h / ROWS * COLS;
     }
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, COLS * CELL_SIZE, UI_HEIGHT * CELL_SIZE, (ROWS + 2) * CELL_SIZE);
+
+
+
+
+
 }
 
 /*!
@@ -404,20 +460,18 @@ void reshape(int w, int h) {
  * \param[in] argv Tablica argumentów wiersza poleceń.
  * \return Kod zakończenia programu.
  */
-int main(int argc, char **argv) {
+
+int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(COLS * CELL_SIZE, (ROWS + UI_HEIGHT) * CELL_SIZE);
+    glutInitWindowSize(COLS * CELL_SIZE, (ROWS ) * CELL_SIZE);
     glutCreateWindow("Snake Game");
+    init();
     glutDisplayFunc(display);
-    glutTimerFunc(100, update, 0);
-    glutKeyboardFunc(keyboardNormal);
     glutSpecialFunc(keyboard);
     glutReshapeFunc(reshape);
-    init();
-    generateFood();
+    glutTimerFunc(0, update, 0);
     glutMainLoop();
     return 0;
+
 }
-
-
